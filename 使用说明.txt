@@ -1,0 +1,12 @@
+Valorant 高光剪辑 Windows 纯桌面版
+
+1. 双击 ValorantHighlightClipper.exe。
+2. 在窗口里选择素材文件夹或单个视频。
+3. 点击“扫描视频”，选中要处理的视频。
+4. 按需要调整参数，然后点击“开始剪辑”。
+5. 输出默认写到 exe 同目录下的 outputs\valorant_highlights。
+
+说明：
+- 这个版本不会打开浏览器，也不会启动本地网页服务。
+- exe 已内置 ffmpeg.exe、ffprobe.exe 和识别资源。
+- “严格过滤队友击杀”默认开启，用来减少队友击杀被误剪。
