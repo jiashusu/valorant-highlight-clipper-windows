@@ -1,42 +1,51 @@
-# Valorant 高光剪辑 Windows 纯桌面版
+# Valorant 高光剪辑 Windows 版
 
-这是 Windows 纯桌面应用版本，不打开浏览器，不启动本地网页服务。所有操作都在应用窗口里完成。
+这是 Windows 桌面版源码。程序会扫描 Valorant 录像，识别击杀信息区域，自动导出高光片段。当前发布包是纯桌面 exe，不打开浏览器，也不启动本地网页服务。
 
-## 下载
+## 主要入口
 
-请在本仓库的 Releases 页面下载：
+- Windows 桌面入口：`windows/launcher.py`
+- 核心识别与导出：`src/valorant_clipper/core.py`
+- Tkinter 桌面界面：`src/valorant_clipper/desktop_app.py`
+- 更新检查：`src/valorant_clipper/update_checker.py`
+- Windows 打包配置：`windows/ValorantHighlightClipper-windows.spec`
+- Windows 构建脚本：`windows/build_windows.ps1`
 
-```text
-ValorantHighlightClipper.exe
+## 当前版本
+
+- 发布版本：`v1.3.0-windows`
+- 默认窗口：`1560x960`
+- 主题：黑色 Windows 桌面 UI
+- 高光卡片：3 列卡片墙，支持低清卡片内预览、高清播放、定位视频、删除片段
+- 导出画质：H.264 `CRF 14`、`slow` preset，优先复制原音频，失败时回退 AAC 192k
+- 预览质量：`320x180`、`30fps`、Lanczos 缩放
+- 更新检查：读取 Windows 版 GitHub Release
+
+## 使用源码运行
+
+```powershell
+cd "C:\Users\shusu\Documents\jiashu project\无畏契约自动剪辑-Windows源码"
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe windows\launcher.py
 ```
 
-exe 已内置识别资源、`ffmpeg.exe`、`ffprobe.exe` 和 `ffplay.exe`，下载后可直接双击运行。
+本地运行和打包都需要 `ffmpeg`、`ffprobe`、`ffplay`。可以把三个 exe 放到项目的 `ffmpeg` 或 `vendor/ffmpeg` 目录，也可以安装到系统 PATH。
 
-## 本版升级
+## 打包 exe
 
-- 默认窗口加大到 `1560x960`。
-- UI 升级为黑色主题，按钮、卡片、表格、日志和进度条统一成深色风格。
-- 检查更新改为检查 Windows 版 GitHub Release。
-- 卡片内预览提升到 `320x180`、`30fps`，缩略图和预览帧使用更高质量缩放。
-- “打开目录”改为“定位此视频”，会在资源管理器里直接选中导出的 mp4。
-- 保留上一版的后台隐藏命令窗口、高画质导出、严格过滤和只读日志。
+```powershell
+cd "C:\Users\shusu\Documents\jiashu project\无畏契约自动剪辑-Windows源码"
+.\windows\build_windows.ps1
+```
 
-## 功能
+构建完成后会生成：
 
-- 选择素材文件夹或单个视频
-- 扫描视频列表
-- 设置识别参数
-- 后台剪辑并显示进度日志
-- 导出区显示高光卡片
-- 每张卡片显示低清缩略图、约 N 杀、片段长度、起止时间
-- 点击卡片缩略图可在卡片内播放低清预览
-- “高清播放”使用内置播放器播放真实 mp4
-- 每张卡片支持定位视频和删除片段
+```text
+release\ValorantHighlightClipper.exe
+```
 
-## 使用方法
+## 使用发布版
 
-1. 双击 `ValorantHighlightClipper.exe`。
-2. 在窗口里选择素材文件夹或单个视频。
-3. 点击“扫描视频”，程序会自动选中列表里的第一个视频。
-4. 按需要调整参数，然后点击“开始剪辑”。
-5. 导出完成后，在右侧卡片墙里预览、播放或管理片段。
+也可以直接在 Windows 版仓库的 Releases 页面下载 `ValorantHighlightClipper.exe`。

@@ -1,0 +1,14 @@
+.venv/
+build/
+dist/
+release/
+outputs/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.spec.bak
+.DS_Store
+Thumbs.db
+*.log
+vendor/ffmpeg/*.zip

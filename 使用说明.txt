@@ -1,16 +1,21 @@
-Valorant 高光剪辑 Windows 纯桌面版
+Valorant 高光剪辑 Windows 版
 
-1. 双击 ValorantHighlightClipper.exe。
-2. 在窗口里选择素材文件夹或单个视频。
-3. 点击“扫描视频”，程序会自动选中列表里的第一个视频。
-4. 按需要调整参数，然后点击“开始剪辑”。
-5. 导出完成后，右侧会显示高光卡片。
-6. 点击卡片缩略图中间的播放标识，可在卡片内播放低清预览。
-7. 点击“高清播放”会打开内置播放器播放真实 mp4。
-8. 点击“定位此视频”会在资源管理器中直接选中该片段文件。
+直接使用：
+1. 下载或双击发布版 ValorantHighlightClipper.exe。
+2. 选择 Valorant 录像文件夹，或直接选择单个视频。
+3. 点击“扫描视频”。
+4. 程序会自动选中列表里的第一个视频。
+5. 点击“开始剪辑”。
+6. 导出完成后，在右侧 Highlights 卡片里预览、高清播放、定位视频或删除片段。
 
-说明：
-- 这个版本不会打开浏览器，也不会启动本地网页服务。
-- exe 已内置 ffmpeg.exe、ffprobe.exe、ffplay.exe 和识别资源。
-- UI 已升级为黑色主题。
-- 检查更新会检查 Windows 版 Release。
+源码位置：
+C:\Users\shusu\Documents\jiashu project\无畏契约自动剪辑-Windows源码
+
+主要源码：
+src\valorant_clipper\desktop_app.py
+src\valorant_clipper\core.py
+src\valorant_clipper\update_checker.py
+
+重新打包：
+在源码目录运行：
+powershell -ExecutionPolicy Bypass -File .\windows\build_windows.ps1
