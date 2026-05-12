@@ -2,6 +2,23 @@
 
 ## 2026-05-11
 
+### Windows 版修复：扫描后未自动选中视频
+
+- 问题现象：
+  - 用户选择单个视频后，界面显示“扫描完成：1 个视频”。
+  - 视频列表里已经出现该视频。
+  - 直接点击“开始剪辑”仍提示“请先扫描并选择一个视频”。
+- 根因判断：
+  - 扫描完成后只渲染列表，没有自动选中第一条。
+  - `selected_video` 只在用户手动点击列表行时才会更新。
+- 本次修改：
+  - 扫描完成后自动选中列表里的第一个视频。
+  - 开始剪辑前如果仍没有选中项，会再尝试从扫描结果里选中第一条。
+  - README 和使用说明同步更新。
+- 同步开发日志中的 NumPy 修复建议：
+  - Windows 端继续使用 `numpy>=1.26.0,<2.0`。
+  - Windows PyInstaller 配置显式加入 `numpy.core.multiarray`。
+
 ### Windows 纯桌面版迁移
 
 - 从 macOS 纯桌面版源码迁移到 Windows 独立项目。
@@ -20,6 +37,23 @@
   - 新增 `windows/launcher.py` 作为 Windows GUI 入口。
   - 新增 `windows/ValorantHighlightClipper-windows.spec`，使用 PyInstaller 打包单文件 exe。
   - 打包时内置 `ffmpeg.exe`、`ffprobe.exe`、识别模型和遮罩资源。
+
+### 更新记录：修复 macOS 剪辑时报 `numpy.core.multiarray` 缺失
+
+- 问题现象：
+  - macOS App 可以打开，也可以扫描视频。
+  - 点击开始剪辑后报错：`No module named 'numpy.core.multiarray'`。
+- 根因判断：
+  - 当前本地打包环境安装了 NumPy 2.x。
+  - 项目里的模型文件 `valorant.npy` 来自旧版 NumPy 序列化格式，运行时会引用 `numpy.core.multiarray`。
+  - PyInstaller 打包时也可能因为这是 pickle 间接引用而没有自动收进去。
+- 本次修改：
+  - 将 `requirements.txt` 中 NumPy 固定为 `numpy>=1.26.0,<2.0`。
+  - 在 `mac/ValorantHighlightClipper.spec` 里显式加入 hidden import：`numpy.core.multiarray`。
+  - 后续重新打包 macOS App，确保 App 内置兼容版本的 NumPy。
+- Windows 同步提示：
+  - Windows 端重建时同样建议使用 `numpy>=1.26.0,<2.0`。
+  - 如果用 PyInstaller，也建议加入 hidden import：`numpy.core.multiarray`。
 
 ### 项目目标
 
