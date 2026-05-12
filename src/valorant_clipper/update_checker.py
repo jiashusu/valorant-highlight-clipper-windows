@@ -12,6 +12,10 @@ from .build_info import BUILD_DATE, BUILD_SHA
 
 
 REPO = "jiashusu/valorant-highlight-clipper-windows"
+MANIFEST_URL = (
+    "https://raw.githubusercontent.com/"
+    "jiashusu/valorant-highlight-clipper-windows-update/main/latest.json"
+)
 REPO_URL = f"https://github.com/{REPO}"
 DOWNLOAD_URL = f"{REPO_URL}/releases/latest"
 
@@ -81,17 +85,41 @@ def check_for_update() -> UpdateResult:
 
 def fetch_latest_release() -> tuple[str, str]:
     errors: list[str] = []
-    try:
-        return fetch_latest_release_public()
-    except Exception as exc:
-        errors.append(f"GitHub API: {exc}")
+    for fetcher_name, fetcher in (
+        ("更新清单", fetch_latest_release_manifest),
+        ("GitHub Release", fetch_latest_release_public),
+        ("gh CLI", fetch_latest_release_with_gh),
+    ):
+        try:
+            return fetcher()
+        except Exception as exc:
+            errors.append(f"{fetcher_name}: {exc}")
 
-    try:
-        return fetch_latest_release_with_gh()
-    except Exception as exc:
-        errors.append(f"gh CLI: {exc}")
+    raise RuntimeError("无法检查 Windows 版更新。" + "；".join(errors))
 
-    raise RuntimeError("无法检查更新。" + "；".join(errors))
+
+def fetch_latest_release_manifest() -> tuple[str, str]:
+    request = urllib.request.Request(
+        MANIFEST_URL,
+        headers={
+            "Accept": "application/json",
+            "User-Agent": "ValorantHighlightClipperWindows",
+            "Cache-Control": "no-cache",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=8) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(f"HTTP {exc.code}") from exc
+
+    tag = str(payload.get("tag_name") or payload.get("version") or "").strip()
+    if not tag:
+        raise RuntimeError("response missing tag_name")
+    release_url = str(
+        payload.get("download_url") or payload.get("html_url") or DOWNLOAD_URL
+    ).strip() or DOWNLOAD_URL
+    return tag, release_url
 
 
 def fetch_latest_release_public() -> tuple[str, str]:

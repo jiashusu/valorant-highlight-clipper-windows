@@ -28,8 +28,8 @@ from .update_checker import UpdateResult, check_for_update
 
 APP_TITLE = "Valorant 高光剪辑 Windows 版"
 UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000
-THUMBNAIL_WIDTH = 320
-THUMBNAIL_HEIGHT = 180
+THUMBNAIL_WIDTH = 384
+THUMBNAIL_HEIGHT = 216
 CLIP_CARD_COLUMNS = 3
 CARD_PREVIEW_FPS = 30
 UI_FONT = ("Segoe UI", 10)
@@ -55,12 +55,14 @@ COLORS = {
 
 
 def open_path(path: Path) -> None:
-    path = path.expanduser().resolve()
+    path = path.expanduser().resolve(strict=False)
     if os.name == "nt":
         if path.is_file():
-            subprocess.Popen(["explorer.exe", f"/select,{path}"], **hidden_subprocess_kwargs())
-        else:
+            subprocess.Popen(["explorer.exe", f'/select,"{path}"'], **hidden_subprocess_kwargs())
+        elif path.exists():
             os.startfile(str(path))  # type: ignore[attr-defined]
+        else:
+            raise FileNotFoundError(path)
     elif sys.platform == "darwin":
         if path.is_file():
             subprocess.Popen(["open", "-R", str(path)])
@@ -76,8 +78,8 @@ class DesktopApp:
     def __init__(self) -> None:
         self.root = Tk()
         self.root.title(APP_TITLE)
-        self.root.geometry("1560x960")
-        self.root.minsize(1280, 820)
+        self.root.geometry("1720x980")
+        self.root.minsize(1360, 840)
         self.root.configure(bg=COLORS["bg"])
 
         self.source_path = StringVar(value=str(DEFAULT_SOURCE_DIR))
@@ -233,7 +235,7 @@ class DesktopApp:
         left = ttk.Frame(body, padding=12, style="Panel.TFrame")
         right = ttk.Frame(body, padding=12, style="Panel.TFrame")
         body.add(left, weight=2)
-        body.add(right, weight=3)
+        body.add(right, weight=6)
 
         self._build_left_panel(left)
         self._build_right_panel(right)
@@ -453,7 +455,9 @@ class DesktopApp:
             self.output_dir.set(path)
 
     def open_output_dir(self) -> None:
-        open_path(Path(self.output_dir.get()))
+        output_dir = Path(self.output_dir.get()).expanduser()
+        output_dir.mkdir(parents=True, exist_ok=True)
+        open_path(output_dir)
 
     def scan_videos(self) -> None:
         self.status.set("扫描中")
@@ -780,7 +784,11 @@ class DesktopApp:
         clip = self.current_clip(index)
         if clip is None:
             return
-        open_path(Path(clip.path))
+        clip_path = Path(clip.path).expanduser().resolve(strict=False)
+        if not clip_path.exists():
+            messagebox.showerror(APP_TITLE, f"找不到导出视频：\n{clip_path}")
+            return
+        open_path(clip_path)
 
     def select_clip(self, index: int | None = None) -> None:
         clip = self.current_clip(index)

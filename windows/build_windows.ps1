@@ -4,7 +4,7 @@ $ProjectRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Pa
 Set-Location $ProjectRoot
 
 if (-not (Get-Command py -ErrorAction SilentlyContinue)) {
-    throw "未找到 Python 启动器 py。请先安装 Python 3.10 或 3.11。"
+    throw "Python launcher py was not found. Install Python 3.10 or 3.11 first."
 }
 
 if (-not (Test-Path ".venv")) {
@@ -23,8 +23,8 @@ New-Item -ItemType Directory -Force -Path $ReleaseDir | Out-Null
 Copy-Item "dist\ValorantHighlightClipper.exe" (Join-Path $ReleaseDir "ValorantHighlightClipper.exe") -Force
 Copy-Item "README.md" (Join-Path $ReleaseDir "README.md") -Force
 Copy-Item "DEVELOPMENT_LOG.md" (Join-Path $ReleaseDir "DEVELOPMENT_LOG.md") -Force
-if (Test-Path "使用说明.txt") {
-    Copy-Item "使用说明.txt" (Join-Path $ReleaseDir "使用说明.txt") -Force
+Get-ChildItem -LiteralPath $ProjectRoot -Filter "*.txt" -File | ForEach-Object {
+    Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $ReleaseDir $_.Name) -Force
 }
 
-Write-Host "构建完成: $ReleaseDir\ValorantHighlightClipper.exe"
+Write-Host "Build complete: $ReleaseDir\ValorantHighlightClipper.exe"
