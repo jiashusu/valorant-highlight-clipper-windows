@@ -10,8 +10,8 @@ import threading
 import webbrowser
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QPoint, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QImage, QPainter, QPainterPath, QPixmap, QTextCursor
+from PySide6.QtCore import QObject, QPoint, QSize, Qt, QTimer, Signal
+from PySide6.QtGui import QColor, QIcon, QImage, QPainter, QPainterPath, QPixmap, QTextCursor
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -50,10 +50,13 @@ from .core import (
     process_video,
     resolve_tool,
 )
+from .build_info import BUILD_SHA
+from .paths import resource_root
 from .update_checker import UpdateResult, check_for_update
 
 
 APP_TITLE = "Valorant 高光剪辑 Windows 版"
+APP_VERSION = "Windows v1.4.1"
 AUTHOR_URL = "https://github.com/jiashusu/valorant-highlight-clipper-windows"
 THUMBNAIL_WIDTH = 384
 THUMBNAIL_HEIGHT = 216
@@ -62,20 +65,26 @@ CLIP_CARD_COLUMNS = 3
 UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000
 
 COLORS = {
-    "bg": "#05070d",
-    "panel": "rgba(18, 26, 42, 0.72)",
-    "panel_strong": "rgba(20, 30, 50, 0.88)",
-    "card": "rgba(17, 26, 43, 0.82)",
-    "card_hover": "rgba(25, 38, 62, 0.90)",
-    "field": "rgba(7, 12, 24, 0.78)",
-    "border": "rgba(139, 180, 230, 0.24)",
-    "border_hot": "rgba(34, 211, 238, 0.56)",
-    "text": "#e7ecf5",
-    "muted": "#94a3b8",
-    "accent": "#22d3ee",
-    "accent_2": "#06b6d4",
-    "danger": "#fb7185",
-    "warning": "#facc15",
+    "bg_top": "#050506",
+    "bg_bottom": "#0B0B0D",
+    "panel": "rgba(24, 24, 27, 0.62)",
+    "panel_strong": "rgba(24, 24, 27, 0.82)",
+    "card": "rgba(29, 29, 34, 0.76)",
+    "card_hover": "rgba(38, 38, 43, 0.86)",
+    "field": "rgba(13, 13, 16, 0.80)",
+    "field_soft": "rgba(21, 21, 25, 0.66)",
+    "border": "rgba(255, 255, 255, 0.075)",
+    "border_hot": "rgba(255, 255, 255, 0.18)",
+    "text": "#F6F8FC",
+    "muted": "#A8ABB2",
+    "subtle": "#737780",
+    "accent": "#64D2FF",
+    "accent_2": "#87DEFF",
+    "accent_text": "#071018",
+    "danger": "#FF6B7A",
+    "danger_soft": "rgba(255, 107, 122, 0.22)",
+    "warning": "#FFD84D",
+    "warning_bg": "rgba(36, 31, 16, 0.58)",
 }
 
 TEXTS = {
@@ -296,6 +305,19 @@ def format_size(value: int) -> str:
     return f"{value / 1024 / 1024:.1f} MB"
 
 
+def app_icon_path() -> Path:
+    return resource_root() / "assets" / "app_icon" / "ValorantHighlightClipper.ico"
+
+
+def short_build() -> str:
+    value = (BUILD_SHA or "").strip()
+    if value.startswith("v") and value.endswith("-windows"):
+        return value[1:-8]
+    if value.startswith("v"):
+        return value
+    return value[:7] if value else "unknown"
+
+
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
@@ -336,6 +358,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(self.text("app_title"))
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        icon_path = app_icon_path()
+        if icon_path.exists():
+            self.setWindowIcon(QIcon(str(icon_path)))
         self.resize(1720, 980)
         self.setMinimumSize(1360, 840)
         self.build_ui()
@@ -444,9 +469,19 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout(titlebar)
         layout.setContentsMargins(14, 6, 8, 6)
         layout.setSpacing(10)
+        icon_path = app_icon_path()
+        if icon_path.exists():
+            logo = QLabel()
+            logo.setObjectName("titleLogo")
+            logo.setFixedSize(22, 22)
+            logo.setPixmap(QIcon(str(icon_path)).pixmap(QSize(22, 22)))
+            layout.addWidget(logo)
         title = self.bind_text(QLabel(), "app_title")
         title.setObjectName("titleText")
         layout.addWidget(title)
+        version = QLabel(f"{APP_VERSION} · {short_build()}")
+        version.setObjectName("versionText")
+        layout.addWidget(version)
         layout.addStretch(1)
         author = self.bind_text(QLabel(), "author")
         author.setObjectName("linkText")
@@ -556,10 +591,17 @@ class MainWindow(QMainWindow):
         self.video_table = QTableWidget(0, 3)
         self.video_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.video_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.video_table.setTextElideMode(Qt.TextElideMode.ElideNone)
+        self.video_table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.video_table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.video_table.verticalHeader().setVisible(False)
-        self.video_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.video_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.video_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        self.video_table.horizontalHeader().setStretchLastSection(False)
+        self.video_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
+        self.video_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)
+        self.video_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
+        self.video_table.setColumnWidth(0, 82)
+        self.video_table.setColumnWidth(1, 104)
+        self.video_table.setColumnWidth(2, 760)
         self.video_table.itemSelectionChanged.connect(self.select_video_from_table)
         video_layout.addWidget(self.video_table)
         layout.addWidget(video_group, 1)
@@ -618,18 +660,25 @@ class MainWindow(QMainWindow):
             font-size: 10pt;
         }}
         #outer {{
-            background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 #05070d, stop:0.48 #07101f, stop:1 #020409);
-            border: 1px solid rgba(148, 163, 184, 0.20);
+            background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 {COLORS['bg_top']}, stop:1 {COLORS['bg_bottom']});
+            border: 1px solid rgba(255, 255, 255, 0.16);
             border-radius: 18px;
         }}
         #titlebar {{
-            background: rgba(4, 7, 13, 0.34);
-            border: 1px solid rgba(148, 163, 184, 0.12);
+            background: rgba(8, 8, 10, 0.54);
+            border: 1px solid rgba(255, 255, 255, 0.11);
             border-radius: 14px;
+        }}
+        #titleLogo {{
+            background: transparent;
         }}
         #titleText, #sectionTitle {{
             font-weight: 700;
-            color: #f8fbff;
+            color: {COLORS['text']};
+        }}
+        #versionText {{
+            color: {COLORS['accent']};
+            font-weight: 700;
         }}
         #linkText {{
             color: {COLORS['accent']};
@@ -642,17 +691,17 @@ class MainWindow(QMainWindow):
         #glassPanel, QGroupBox, #card {{
             background: {COLORS['panel']};
             border: 1px solid {COLORS['border']};
-            border-radius: 18px;
+            border-radius: 22px;
         }}
         QGroupBox {{
             margin-top: 14px;
-            padding: 14px;
+            padding: 16px;
         }}
         QGroupBox::title {{
             subcontrol-origin: margin;
             left: 14px;
             padding: 0 8px;
-            color: #f8fbff;
+            color: {COLORS['text']};
             font-weight: 700;
         }}
         QLineEdit, QSpinBox, QDoubleSpinBox, QTextEdit, QTableWidget {{
@@ -660,51 +709,52 @@ class MainWindow(QMainWindow):
             border: 1px solid {COLORS['border']};
             border-radius: 12px;
             padding: 8px;
-            selection-background-color: rgba(34, 211, 238, 0.38);
+            selection-background-color: rgba(100, 210, 255, 0.30);
         }}
         QHeaderView::section {{
-            background: rgba(22, 32, 51, 0.88);
-            color: #f8fbff;
+            background: {COLORS['field_soft']};
+            color: {COLORS['text']};
             border: 0;
-            border-right: 1px solid rgba(148, 163, 184, 0.20);
+            border-right: 1px solid rgba(255, 255, 255, 0.11);
             padding: 8px;
             font-weight: 700;
         }}
         QTableWidget::item {{
             padding: 8px;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.10);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.055);
         }}
         QTableWidget::item:selected {{
-            background: rgba(34, 211, 238, 0.34);
+            background: rgba(100, 210, 255, 0.24);
         }}
         QPushButton {{
-            background: rgba(255, 255, 255, 0.07);
-            border: 1px solid rgba(226, 232, 240, 0.22);
-            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.09);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 18px;
             padding: 9px 16px;
-            color: #f8fbff;
+            color: {COLORS['text']};
+            font-weight: 650;
         }}
         QPushButton:hover {{
-            background: rgba(255, 255, 255, 0.13);
+            background: rgba(255, 255, 255, 0.15);
             border-color: {COLORS['border_hot']};
         }}
         QPushButton:pressed {{
-            background: rgba(34, 211, 238, 0.18);
+            background: rgba(100, 210, 255, 0.18);
         }}
         #primaryButton, #accentButton {{
-            background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 #22d3ee, stop:1 #06b6d4);
-            color: #031118;
-            border: 1px solid rgba(165, 243, 252, 0.72);
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 {COLORS['accent']}, stop:1 {COLORS['accent_2']});
+            color: {COLORS['accent_text']};
+            border: 1px solid rgba(255, 255, 255, 0.44);
             font-weight: 800;
         }}
         #dangerButton {{
-            background: rgba(127, 29, 44, 0.58);
-            border: 1px solid rgba(251, 113, 133, 0.62);
-            color: #ffe4e6;
+            background: {COLORS['danger_soft']};
+            border: 1px solid rgba(255, 107, 122, 0.34);
+            color: #FFD8DD;
         }}
         #titleButton, #windowButton, #closeButton {{
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 13px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
             padding: 6px 10px;
         }}
         #closeButton:hover {{
@@ -719,22 +769,22 @@ class MainWindow(QMainWindow):
         }}
         QCheckBox::indicator:checked {{
             background: {COLORS['accent']};
-            border-color: rgba(165, 243, 252, 0.85);
+            border-color: rgba(255, 255, 255, 0.44);
         }}
         QProgressBar {{
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(148, 163, 184, 0.18);
+            background: rgba(255, 255, 255, 0.09);
+            border: 1px solid rgba(255, 255, 255, 0.10);
             border-radius: 10px;
             height: 18px;
             text-align: center;
         }}
         QProgressBar::chunk {{
-            background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 #10b981, stop:1 #22d3ee);
+            background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 #2DD4BF, stop:1 {COLORS['accent']});
             border-radius: 9px;
         }}
         #warning {{
-            background: rgba(250, 204, 21, 0.10);
-            border: 1px solid rgba(250, 204, 21, 0.24);
+            background: {COLORS['warning_bg']};
+            border: 1px solid rgba(255, 216, 77, 0.20);
             border-radius: 14px;
             color: {COLORS['warning']};
             padding: 10px 12px;
@@ -742,6 +792,9 @@ class MainWindow(QMainWindow):
         #mutedCenter {{
             color: {COLORS['muted']};
             padding: 34px;
+            background: rgba(29, 29, 34, 0.58);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 18px;
         }}
         QScrollBar:vertical {{
             background: rgba(255, 255, 255, 0.03);
@@ -749,9 +802,22 @@ class MainWindow(QMainWindow):
             border-radius: 6px;
         }}
         QScrollBar::handle:vertical {{
-            background: rgba(148, 163, 184, 0.38);
+            background: rgba(168, 171, 178, 0.30);
             min-height: 36px;
             border-radius: 6px;
+        }}
+        QScrollBar:horizontal {{
+            background: rgba(255, 255, 255, 0.03);
+            height: 12px;
+            border-radius: 6px;
+        }}
+        QScrollBar::handle:horizontal {{
+            background: rgba(168, 171, 178, 0.30);
+            min-width: 36px;
+            border-radius: 6px;
+        }}
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
+            width: 0;
         }}
         QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
             height: 0;
@@ -986,11 +1052,22 @@ class MainWindow(QMainWindow):
             for col, value in enumerate(values):
                 item = QTableWidgetItem(value)
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                item.setToolTip(value)
                 if col == 2:
                     item.setData(Qt.ItemDataRole.UserRole, value)
                 self.video_table.setItem(row, col, item)
+        self.update_video_path_column_width()
         self.select_first_video()
         self.set_status("scan_done", count=len(self.videos))
+
+    def update_video_path_column_width(self) -> None:
+        longest = self.text("path")
+        for video in self.videos:
+            path = str(video.get("path", ""))
+            if len(path) > len(longest):
+                longest = path
+        width = self.video_table.fontMetrics().horizontalAdvance(longest) + 42
+        self.video_table.setColumnWidth(2, max(760, min(width, 2200)))
 
     def render_clips(self, clips) -> None:
         self.clips = list(clips)
