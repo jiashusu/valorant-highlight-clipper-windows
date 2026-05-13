@@ -52,6 +52,19 @@ def short_version(value: str) -> str:
     return value[:7]
 
 
+def equivalent_version(left: str, right: str | None) -> bool:
+    left_short = comparable_version(left)
+    right_short = comparable_version(right or "")
+    return left_short != "unknown" and left_short == right_short
+
+
+def comparable_version(value: str) -> str:
+    short = short_version(value)
+    if short.endswith("-windows"):
+        short = short[:-8]
+    return short
+
+
 def hidden_subprocess_kwargs() -> dict:
     creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     if os.name == "nt" and creationflags:
@@ -71,7 +84,7 @@ def check_for_update() -> UpdateResult:
             download_url=release_url,
         )
 
-    if current_tag == latest_tag:
+    if equivalent_version(current_tag, latest_tag):
         return UpdateResult(
             current_sha=current_tag,
             remote_sha=latest_tag,
