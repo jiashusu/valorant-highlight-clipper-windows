@@ -18,6 +18,7 @@
   - 文件夹/视频选择、递归扫描、参数设置、日志只读、开始剪辑、进度条、Highlights 卡片墙、低清预览、高清播放、删除、定位视频、检查更新全部保留。
   - `定位此视频` 继续只接受真实存在的导出 mp4，并通过 Windows Explorer 精确选中文件。
   - 中英文切换继续默认中文，不持久化语言选择。
+  - 更新检查优先读取 GitHub 公开 Contents API，失败时再回退 raw `latest.json`，避免 raw 缓存导致仍显示旧版本。
 - 打包与发布准备：
   - `requirements.txt` 增加 `PySide6>=6.7,<7`。
   - PyInstaller spec 移除 Tkinter/PIL.ImageTk 相关 hidden imports，加入 PySide6 QtCore/QtGui/QtWidgets。

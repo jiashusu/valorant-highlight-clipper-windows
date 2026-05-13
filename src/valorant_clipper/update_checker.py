@@ -6,16 +6,22 @@ import shutil
 import subprocess
 import urllib.error
 import urllib.request
+import base64
 from dataclasses import dataclass
 
 from .build_info import BUILD_DATE, BUILD_SHA
 
 
 REPO = "jiashusu/valorant-highlight-clipper-windows"
-MANIFEST_URL = (
+MANIFEST_API_URL = (
+    "https://api.github.com/repos/"
+    "jiashusu/valorant-highlight-clipper-windows-update/contents/latest.json?ref=main"
+)
+MANIFEST_RAW_URL = (
     "https://raw.githubusercontent.com/"
     "jiashusu/valorant-highlight-clipper-windows-update/main/latest.json"
 )
+MANIFEST_URL = MANIFEST_API_URL
 REPO_URL = f"https://github.com/{REPO}"
 DOWNLOAD_URL = f"{REPO_URL}/releases/latest"
 
@@ -99,10 +105,30 @@ def fetch_latest_release() -> tuple[str, str]:
 
 
 def fetch_latest_release_manifest() -> tuple[str, str]:
+    errors: list[str] = []
+    for manifest_url in (MANIFEST_API_URL, MANIFEST_RAW_URL):
+        try:
+            payload = fetch_manifest_payload(manifest_url)
+            break
+        except Exception as exc:
+            errors.append(f"{manifest_url}: {exc}")
+    else:
+        raise RuntimeError("; ".join(errors))
+
+    tag = str(payload.get("tag_name") or payload.get("version") or "").strip()
+    if not tag:
+        raise RuntimeError("response missing tag_name")
+    release_url = str(
+        payload.get("download_url") or payload.get("html_url") or DOWNLOAD_URL
+    ).strip() or DOWNLOAD_URL
+    return tag, release_url
+
+
+def fetch_manifest_payload(manifest_url: str) -> dict:
     request = urllib.request.Request(
-        MANIFEST_URL,
+        manifest_url,
         headers={
-            "Accept": "application/json",
+            "Accept": "application/vnd.github+json, application/json",
             "User-Agent": "ValorantHighlightClipperWindows",
             "Cache-Control": "no-cache",
         },
@@ -113,13 +139,10 @@ def fetch_latest_release_manifest() -> tuple[str, str]:
     except urllib.error.HTTPError as exc:
         raise RuntimeError(f"HTTP {exc.code}") from exc
 
-    tag = str(payload.get("tag_name") or payload.get("version") or "").strip()
-    if not tag:
-        raise RuntimeError("response missing tag_name")
-    release_url = str(
-        payload.get("download_url") or payload.get("html_url") or DOWNLOAD_URL
-    ).strip() or DOWNLOAD_URL
-    return tag, release_url
+    if "content" in payload and payload.get("encoding") == "base64":
+        content = str(payload["content"]).replace("\n", "")
+        return json.loads(base64.b64decode(content).decode("utf-8"))
+    return payload
 
 
 def fetch_latest_release_public() -> tuple[str, str]:
