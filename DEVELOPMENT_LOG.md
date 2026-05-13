@@ -1,5 +1,28 @@
 # 开发日志
 
+## 2026-05-13
+
+### Windows 版 v1.4.0：PySide6 玻璃 UI 迁移
+
+- 将 Windows 默认桌面入口从 Tkinter 切换到 PySide6：
+  - 新增 `src/valorant_clipper/qt_app.py`。
+  - `windows/launcher.py` 改为启动 PySide6 UI。
+  - 保留 `src/valorant_clipper/desktop_app.py` 作为旧版参考/回退，不再作为 Windows 默认入口。
+- 视觉系统升级为黑暗玻璃风：
+  - 使用无边框自绘标题栏，保留拖动、最小化、最大化/还原、关闭。
+  - Windows 11 下优先启用 Mica/System Backdrop，失败时使用深色渐变背景。
+  - 面板、日志框、参数区、Highlights 卡片使用半透明背景、柔和描边、圆角和阴影。
+  - 按钮统一为圆角玻璃质感，主按钮使用青色高亮，删除按钮使用暗红色层级。
+  - 视频列表从旧 Treeview 视觉迁移为 Qt 暗色表格。
+- 功能保持不变：
+  - 文件夹/视频选择、递归扫描、参数设置、日志只读、开始剪辑、进度条、Highlights 卡片墙、低清预览、高清播放、删除、定位视频、检查更新全部保留。
+  - `定位此视频` 继续只接受真实存在的导出 mp4，并通过 Windows Explorer 精确选中文件。
+  - 中英文切换继续默认中文，不持久化语言选择。
+- 打包与发布准备：
+  - `requirements.txt` 增加 `PySide6>=6.7,<7`。
+  - PyInstaller spec 移除 Tkinter/PIL.ImageTk 相关 hidden imports，加入 PySide6 QtCore/QtGui/QtWidgets。
+  - 版本号更新为 `v1.4.0-windows`。
+
 ## 2026-05-12
 
 ### Windows 版 v1.3.2：自绘标题栏、语言切换和定位修复

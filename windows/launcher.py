@@ -1,4 +1,4 @@
-from valorant_clipper.desktop_app import main
+from valorant_clipper.qt_app import main
 
 
 if __name__ == "__main__":

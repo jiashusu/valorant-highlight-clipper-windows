@@ -3,7 +3,6 @@
 from pathlib import Path
 from shutil import which
 
-
 project = Path.cwd()
 
 datas = [
@@ -29,11 +28,16 @@ a = Analysis(
     pathex=[str(project / "src")],
     binaries=binaries,
     datas=datas,
-    hiddenimports=["tkinter", "tkinter.filedialog", "PIL.ImageTk", "numpy.core.multiarray"],
+    hiddenimports=[
+        "numpy.core.multiarray",
+        "PySide6.QtCore",
+        "PySide6.QtGui",
+        "PySide6.QtWidgets",
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=["fastapi", "uvicorn", "starlette", "pydantic"],
+    excludes=["fastapi", "uvicorn", "starlette", "pydantic", "tkinter", "PIL.ImageTk"],
     noarchive=False,
     optimize=0,
 )
