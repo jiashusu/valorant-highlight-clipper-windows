@@ -1,2 +1,2 @@
-BUILD_SHA = "v1.4.0-windows"
+BUILD_SHA = "v1.4.1-windows"
 BUILD_DATE = "2026-05-13T00:00:00-05:00"
