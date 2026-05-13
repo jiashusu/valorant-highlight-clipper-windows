@@ -7,6 +7,7 @@ project = Path.cwd()
 
 datas = [
     (str(project / "assets" / "valorant_clipper"), "assets/valorant_clipper"),
+    (str(project / "assets" / "app_icon"), "assets/app_icon"),
 ]
 binaries = []
 
@@ -57,6 +58,7 @@ exe = EXE(
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,
+    icon=str(project / "assets" / "app_icon" / "ValorantHighlightClipper.ico"),
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
