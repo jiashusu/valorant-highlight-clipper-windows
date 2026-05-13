@@ -2,6 +2,25 @@
 
 ## 2026-05-13
 
+### Windows 版 v1.4.1：同步 mac 黑灰 UI、Logo 与路径显示修复
+
+- 参考 mac 主仓库 `jiashusu/valorant-highlight-clipper` 的 AppKit UI，把 Windows PySide6 视觉从蓝黑电竞风调整为 Apple 黑灰玻璃风：
+  - 背景使用 `#050506/#0B0B0D`，面板使用半透明 `#18181B`，输入框使用 `#0D0D10`，卡片使用 `#1D1D22`。
+  - 只保留 `#64D2FF` 作为主按钮、作者链接和进度条强调色，降低大面积青色和蓝色描边。
+  - 标题栏新增 `Windows v1.4.1 · 构建号`，方便确认当前运行版本。
+- 同步 mac 更新日志里提示的 Windows 缺项：
+  - 从 mac 图标资源生成 Windows 专用 `ValorantHighlightClipper.ico`。
+  - exe、窗口、任务栏和标题栏左侧小图标使用专属 logo。
+  - PyInstaller spec 接入图标资源。
+- 修复视频列表路径显示 bug：
+  - 路径列禁用省略显示，不再只显示 `C:...`。
+  - 表格开启横向滚动，长路径可完整查看。
+  - 每个路径单元格增加完整路径 tooltip，并继续在 `UserRole` 保存真实路径。
+- 更新检查加入短版本兜底比较：
+  - 当前版本和远端版本短版本一致时视为已是最新，避免“当前和最新一样仍提示新版”。
+
+## 2026-05-13
+
 ### Windows 版 v1.4.0：PySide6 玻璃 UI 迁移
 
 - 将 Windows 默认桌面入口从 Tkinter 切换到 PySide6：
