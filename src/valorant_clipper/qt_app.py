@@ -56,7 +56,7 @@ from .update_checker import UpdateResult, check_for_update
 
 
 APP_TITLE = "Valorant 高光剪辑 Windows 版"
-APP_VERSION = "Windows v1.4.1"
+APP_VERSION = "Windows v1.4.2"
 AUTHOR_URL = "https://github.com/jiashusu/valorant-highlight-clipper-windows"
 THUMBNAIL_WIDTH = 384
 THUMBNAIL_HEIGHT = 216
@@ -101,7 +101,7 @@ TEXTS = {
         "output_dir": "输出目录",
         "choose_output": "选择输出目录",
         "open_output": "打开输出目录",
-        "settings": "参数",
+        "settings": "参数（建议不要动，除非你懂什么意思）",
         "confidence": "置信度",
         "framerate": "识别帧率",
         "seconds_before": "提前秒数",
@@ -130,6 +130,7 @@ TEXTS = {
         "reveal_video": "定位此视频",
         "delete": "删除",
         "start": "开始剪辑",
+        "start_busy": "剪辑中",
         "ready": "准备就绪",
         "scanning": "扫描中",
         "checking_update": "检查更新中",
@@ -156,6 +157,9 @@ TEXTS = {
         "clip_info": "约 {kills} 杀  ·  {duration:.2f}s\n{start:.2f}s - {end:.2f}s",
         "deleted_log": "已删除片段: {name}\n",
         "finished_log": "完成，导出 {count} 个片段\n",
+        "estimate_under_minute": "约 1 分钟内",
+        "estimate_minutes": "约 {low}-{high} 分钟",
+        "estimate_log": "预计可能需要：{estimate}。导出时间取决于视频长度、电脑性能、识别帧率和导出设置。处理时可以去喝杯茶，放松一下。",
         "busy": "当前还有任务在运行。",
         "select_video_first": "请先扫描并选择一个视频。",
         "update_open": "{message}\n\n是否打开 GitHub Release 下载新版 Windows exe？",
@@ -174,7 +178,7 @@ TEXTS = {
         "output_dir": "Output folder",
         "choose_output": "Choose output",
         "open_output": "Open output",
-        "settings": "Settings",
+        "settings": "Settings (do not change unless you know what they mean)",
         "confidence": "Confidence",
         "framerate": "Scan FPS",
         "seconds_before": "Before seconds",
@@ -203,6 +207,7 @@ TEXTS = {
         "reveal_video": "Reveal File",
         "delete": "Delete",
         "start": "Start Clipping",
+        "start_busy": "Clipping...",
         "ready": "Ready",
         "scanning": "Scanning",
         "checking_update": "Checking updates",
@@ -229,6 +234,9 @@ TEXTS = {
         "clip_info": "~{kills} kills  ·  {duration:.2f}s\n{start:.2f}s - {end:.2f}s",
         "deleted_log": "Deleted clip: {name}\n",
         "finished_log": "Done, exported {count} clips\n",
+        "estimate_under_minute": "about under 1 minute",
+        "estimate_minutes": "about {low}-{high} minutes",
+        "estimate_log": "Estimated time: {estimate}. Export time depends on video length, PC performance, scan FPS, and export settings. You can grab a drink and relax while it runs.",
         "busy": "Another task is still running.",
         "select_video_first": "Scan and select a video first.",
         "update_open": "{message}\n\nOpen GitHub Release to download the new Windows exe?",
@@ -303,6 +311,28 @@ def format_size(value: int) -> str:
     if gb >= 1:
         return f"{gb:.2f} GB"
     return f"{value / 1024 / 1024:.1f} MB"
+
+
+def estimate_minutes_range(
+    video_duration: float,
+    max_seconds: float | None,
+    framerate: int,
+    copy_streams: bool,
+) -> tuple[int, int]:
+    analysis_seconds = max(0.0, video_duration)
+    if max_seconds is not None:
+        analysis_seconds = min(analysis_seconds, max(0.0, max_seconds))
+    low_seconds = analysis_seconds * 0.20
+    high_seconds = analysis_seconds * 0.45
+    if copy_streams:
+        low_seconds *= 0.75
+        high_seconds *= 0.75
+    if framerate > 12:
+        low_seconds *= 1.25
+        high_seconds *= 1.25
+    low_minutes = max(1, int((low_seconds + 59) // 60))
+    high_minutes = max(low_minutes, int((high_seconds + 59) // 60))
+    return low_minutes, high_minutes
 
 
 def app_icon_path() -> Path:
@@ -404,6 +434,8 @@ class MainWindow(QMainWindow):
         self.text_widgets = alive_widgets
         self.video_table.setHorizontalHeaderLabels([self.text("duration"), self.text("size"), self.text("path")])
         self.set_status(self.status_key, **self.status_kwargs)
+        if self.worker_thread and self.worker_thread.is_alive():
+            self.start_button.setText(self.text("start_busy"))
         if self.clips:
             selected = self.selected_clip_index
             self.refresh_clip_cards()
@@ -936,9 +968,43 @@ class MainWindow(QMainWindow):
         self.selected_clip_index = None
         self.clear_clip_cards()
         self.start_button.setEnabled(False)
+        self.start_button.setText(self.text("start_busy"))
         self.progress.setValue(0)
         self.set_status("trimming")
+        self.append_log(self.estimate_log_message() + "\n")
         self.run_thread(self.job_worker)
+
+    def selected_video_duration(self) -> float:
+        if self.selected_video is None:
+            return 0.0
+        selected = str(self.selected_video)
+        for video in self.videos:
+            if str(video.get("path", "")) == selected:
+                return float(video.get("duration", 0.0) or 0.0)
+        return 0.0
+
+    def current_max_seconds(self) -> float | None:
+        max_text = self.max_seconds.text().strip()
+        if not max_text:
+            return None
+        try:
+            return float(max_text)
+        except ValueError:
+            return None
+
+    def estimate_label(self) -> str:
+        low, high = estimate_minutes_range(
+            self.selected_video_duration(),
+            self.current_max_seconds(),
+            int(self.framerate.value()),
+            self.copy_streams.isChecked(),
+        )
+        if high <= 1:
+            return self.text("estimate_under_minute")
+        return self.text("estimate_minutes", low=low, high=high)
+
+    def estimate_log_message(self) -> str:
+        return self.text("estimate_log", estimate=self.estimate_label())
 
     def job_worker(self) -> None:
         assert self.selected_video is not None
@@ -986,6 +1052,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, self.text("app_title"), str(payload))
         elif kind == "done":
             self.start_button.setEnabled(True)
+            self.start_button.setText(self.text("start"))
             if self.status_key != "error":
                 self.set_status("done")
         elif kind == "update":
