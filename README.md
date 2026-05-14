@@ -1,4 +1,5 @@
 # Valorant 高光剪辑 Windows 版
+<img width="1920" height="1032" alt="image" src="https://github.com/user-attachments/assets/ac8bbefc-017d-4471-bbd5-7db4e95a9368" />
 
 这是 Windows 桌面版源码。程序会扫描 Valorant 录像，识别击杀信息区域，自动导出高光片段。当前发布包是纯桌面 exe，不打开浏览器，也不启动本地网页服务。
 
