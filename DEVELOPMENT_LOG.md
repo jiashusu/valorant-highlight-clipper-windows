@@ -2,6 +2,15 @@
 
 ## 2026-05-14
 
+### Windows README：增加 macOS 版本介绍
+
+- 需求来源：
+  - 用户要求 macOS 和 Windows 版本的 README 互相介绍对方版本，方便不同系统用户找到正确仓库。
+- 本次修改：
+  - Windows README 新增 macOS 版仓库链接：`jiashusu/valorant-highlight-clipper`。
+  - 说明 macOS 版使用原生 AppKit、`.app` 打包流程和 macOS 更新入口。
+  - 明确本仓库只维护 Windows 版，两个平台会尽量同步核心剪辑体验，但 UI、打包方式和更新检查分别维护。
+
 ### Windows 版 v1.4.2：只加提示与预计耗时
 
 - 不改 `core.py`，不改识别、过滤、导出、预览生成和更新流程。

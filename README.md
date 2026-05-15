@@ -3,6 +3,12 @@
 
 这是 Windows 桌面版源码。程序会扫描 Valorant 录像，识别击杀信息区域，自动导出高光片段。当前发布包是纯桌面 exe，不打开浏览器，也不启动本地网页服务。
 
+## 相关版本
+
+- macOS 版仓库：[jiashusu/valorant-highlight-clipper](https://github.com/jiashusu/valorant-highlight-clipper)
+- 如果你在 macOS 上使用，请下载 macOS 版；它使用原生 AppKit 桌面界面、macOS 专用 `.app` 打包流程和 GitHub Actions 更新入口。
+- 本仓库只维护 Windows 版。两个版本会尽量同步核心剪辑体验，包括高光卡片、低清预览、高清播放、定位视频、删除片段和更新提示；但 UI、打包方式和更新检查入口会按系统分别维护。
+
 ## 主要入口
 
 - Windows 桌面入口：`windows/launcher.py`
