@@ -2,6 +2,19 @@
 
 ## 2026-05-14
 
+### Windows README：参考 macOS 版重写双语主页
+
+- 需求来源：
+  - 用户反馈 macOS 仓库 README 已经很好，希望参考 mac 端去修改 Windows 端 README。
+- 本次修改：
+  - Windows README 改为中文在前、英文在后的双语项目主页。
+  - 保留现有截图，并补充非 Riot Games 官方项目声明。
+  - 增加项目定位、相关版本、功能亮点、下载使用、参数建议、源码运行、打包 exe、项目结构、已知限制和常见问题。
+  - 文档内容按 Windows 实际情况写入 PySide6、Windows 11 Mica、无边框标题栏、exe 发布、Windows Explorer 定位和公开更新清单。
+  - 明确本仓库只维护 Windows 版，macOS 版在 `jiashusu/valorant-highlight-clipper`。
+- macOS 同步提示：
+  - 本次只更新 Windows README 和开发日志，不改 Windows App 代码、不重新打包 exe，也不改 macOS 仓库。
+
 ### Windows README：增加 macOS 版本介绍
 
 - 需求来源：
